@@ -1,1 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Web Video Player</title>
+    
+    <!-- Plyr CSS for modern UI -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #0e1117;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .player-wrapper {
+            width: 100%;
+            max-width: 960px;
+            background: #161b22;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            border: 1px solid #30363d;
+        }
+
+        .player-header {
+            padding: 16px 20px;
+            background: #21262d;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .player-header h1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+
+        .video-container {
+            width: 100%;
+            position: relative;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            max-height: 80vh;
+            display: block;
+        }
+
+        /* Plyr custom theme color */
+        :root {
+            --plyr-color-main: #2f81f7;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="player-wrapper">
+        <div class="player-header">
+            <h1>▶️ Telegram Web Video Player</h1>
+        </div>
+
+        <div class="video-container">
+            <video id="player" playsinline controls preload="metadata">
+                <!-- Change "STREAM_URL_HERE" to your backend stream URL, e.g., /stream/123 -->
+                <source src="STREAM_URL_HERE" type="video/mp4" />
+                Your browser does not support HTML5 video playback.
+            </video>
+        </div>
+    </div>
+
+    <!-- Plyr JS -->
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const player = new Plyr('#player', {
+                controls: [
+                    'play-large',
+                    'play',
+                    'progress',
+                    'current-time',
+                    'duration',
+                    'mute',
+                    'volume',
+                    'captions',
+                    'settings',
+                    'pip',
+                    'airplay',
+                    'fullscreen'
+                ],
+                settings: ['speed', 'loop'],
+                speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
+            });
+        });
+    </script>
+</body>
+</html>
 

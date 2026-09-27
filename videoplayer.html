@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Web Video Player</title>
+    <title>SevenAnime Web Video Player</title>
     
-    <!-- Plyr CSS for modern UI -->
+    <!-- Plyr CSS -->
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
 
     <style>
@@ -16,40 +16,55 @@
         }
 
         body {
-            background-color: #0e1117;
-            color: #ffffff;
+            background-color: #0d1117;
+            color: #c9d1d9;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
-            flex-direction: column;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
         }
 
         .player-wrapper {
             width: 100%;
             max-width: 960px;
             background: #161b22;
-            border-radius: 16px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
             border: 1px solid #30363d;
         }
 
         .player-header {
-            padding: 16px 20px;
+            padding: 14px 20px;
             background: #21262d;
             border-bottom: 1px solid #30363d;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .player-header h1 {
             font-size: 1.1rem;
             font-weight: 600;
             color: #58a6ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .anime-select {
+            background: #0d1117;
+            color: #58a6ff;
+            border: 1px solid #30363d;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
         }
 
         .video-container {
@@ -60,14 +75,105 @@
 
         video {
             width: 100%;
-            height: auto;
-            max-height: 80vh;
+            max-height: 70vh;
             display: block;
         }
 
-        /* Plyr custom theme color */
+        /* Controls Section */
+        .controls-panel {
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: #161b22;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8b949e;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .btn {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #30363d;
+            border-color: #8b949e;
+        }
+
+        .btn.active {
+            background: #238636;
+            color: #ffffff;
+            border-color: #2ea043;
+        }
+
+        .btn-audio.active {
+            background: #1f6beb;
+            color: #ffffff;
+            border-color: #388bfd;
+        }
+
+        .episodes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .ep-btn {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 10px 0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .ep-btn:hover {
+            background: #30363d;
+            color: #58a6ff;
+        }
+
+        .ep-btn.active {
+            background: #388bfd;
+            color: #ffffff;
+            border-color: #58a6ff;
+        }
+
+        .status-msg {
+            text-align: center;
+            padding: 20px;
+            color: #8b949e;
+            font-size: 0.9rem;
+        }
+
         :root {
-            --plyr-color-main: #2f81f7;
+            --plyr-color-main: #388bfd;
         }
     </style>
 </head>
@@ -75,42 +181,217 @@
 
     <div class="player-wrapper">
         <div class="player-header">
-            <h1>▶️ Telegram Web Video Player</h1>
+            <h1 id="now-playing-title">🎬 SevenAnime Player</h1>
+            <select id="anime-selector" class="anime-select" style="display: none;">
+                <option value="">Select Anime</option>
+            </select>
         </div>
 
         <div class="video-container">
             <video id="player" playsinline controls preload="metadata">
-                <!-- Change "STREAM_URL_HERE" to your backend stream URL, e.g., /stream/123 -->
-                <source src="STREAM_URL_HERE" type="video/mp4" />
+                <source src="" type="video/mp4" />
                 Your browser does not support HTML5 video playback.
             </video>
+        </div>
+
+        <div class="controls-panel">
+            <!-- Season Selection -->
+            <div>
+                <div class="section-title">📦 Select Season</div>
+                <div id="season-container" class="btn-group">
+                    <div class="status-msg">Loading backend data...</div>
+                </div>
+            </div>
+
+            <!-- Audio/Dub Selection -->
+            <div>
+                <div class="section-title">🎙️ Audio / Dub Type</div>
+                <div id="audio-container" class="btn-group">
+                    <button class="btn btn-audio active" data-type="official">Official Dub</button>
+                    <button class="btn btn-audio" data-type="unofficial">Fan Dub / Unofficial</button>
+                </div>
+            </div>
+
+            <!-- Episodes List -->
+            <div>
+                <div class="section-title">📺 Episodes</div>
+                <div id="episodes-container" class="episodes-grid">
+                    <div class="status-msg">Select season to load episodes</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Plyr JS -->
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const player = new Plyr('#player', {
+        // API Base URL Detection (Automatically connects to same origin or backend)
+        const BASE_URL = window.location.origin.includes('http') ? window.location.origin : 'https://sevenanime-http-bot.onrender.com';
+
+        let player;
+        let dbData = {};
+        let selectedAnimeKey = '';
+        let selectedSeason = '1';
+        let selectedDubType = 'official';
+        let selectedEp = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Plyr
+            player = new Plyr('#player', {
                 controls: [
-                    'play-large',
-                    'play',
-                    'progress',
-                    'current-time',
-                    'duration',
-                    'mute',
-                    'volume',
-                    'captions',
-                    'settings',
-                    'pip',
-                    'airplay',
-                    'fullscreen'
+                    'play-large', 'play', 'progress', 'current-time', 
+                    'duration', 'mute', 'volume', 'settings', 'pip', 'fullscreen'
                 ],
-                settings: ['speed', 'loop'],
+                settings: ['speed'],
                 speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
             });
+
+            // Fetch Database from main.py API
+            await loadDatabase();
+
+            // Set Audio Listener
+            document.querySelectorAll('.btn-audio').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.btn-audio').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    selectedDubType = e.target.getAttribute('data-type');
+                    renderEpisodes();
+                });
+            });
+
+            // Anime Dropdown Change Listener
+            document.getElementById('anime-selector').addEventListener('change', (e) => {
+                selectedAnimeKey = e.target.value;
+                selectedSeason = Object.keys(dbData[selectedAnimeKey]?.seasons || {})[0] || '1';
+                renderSeasons();
+                renderEpisodes();
+            });
         });
+
+        async function loadDatabase() {
+            try {
+                const res = await fetch(`${BASE_URL}/api/all-anime`);
+                dbData = await res.json();
+
+                const animeKeys = Object.keys(dbData);
+                if (animeKeys.length === 0) {
+                    document.getElementById('season-container').innerHTML = '<div class="status-msg">No anime found in Telegram Database. Scan channel first!</div>';
+                    return;
+                }
+
+                // Populate Anime Dropdown if multiple anime exist
+                const animeSelect = document.getElementById('anime-selector');
+                if (animeKeys.length > 1) {
+                    animeSelect.style.display = 'block';
+                    animeSelect.innerHTML = animeKeys.map(key => `<option value="${key}">${dbData[key].title}</option>`).join('');
+                }
+
+                selectedAnimeKey = animeKeys[0];
+                renderSeasons();
+                renderEpisodes();
+
+            } catch (err) {
+                console.error("API Fetch Error:", err);
+                document.getElementById('season-container').innerHTML = `<div class="status-msg" style="color: #f85149;">Failed to connect to backend main.py</div>`;
+            }
+        }
+
+        function renderSeasons() {
+            const seasonContainer = document.getElementById('season-container');
+            const anime = dbData[selectedAnimeKey];
+            if (!anime || !anime.seasons) return;
+
+            const seasons = Object.keys(anime.seasons).sort((a, b) => parseInt(a) - parseInt(b));
+
+            if (!seasons.includes(selectedSeason)) {
+                selectedSeason = seasons[0] || '1';
+            }
+
+            seasonContainer.innerHTML = seasons.map(s => `
+                <button class="btn ${s === selectedSeason ? 'active' : ''}" onclick="selectSeason('${s}')">
+                    Season ${s}
+                </button>
+            `).join('');
+        }
+
+        function selectSeason(seasonNum) {
+            selectedSeason = seasonNum;
+            renderSeasons();
+            renderEpisodes();
+        }
+
+        function renderEpisodes() {
+            const epContainer = document.getElementById('episodes-container');
+            const anime = dbData[selectedAnimeKey];
+            if (!anime || !anime.seasons || !anime.seasons[selectedSeason]) {
+                epContainer.innerHTML = '<div class="status-msg">No episodes found for this season.</div>';
+                return;
+            }
+
+            // Filter episodes by season and selected Audio/Dub Type
+            let rawEps = anime.seasons[selectedSeason];
+            let filteredEps = rawEps.filter(e => (e.type || 'official') === selectedDubType);
+
+            // Fallback if requested dub type has no episodes
+            if (filteredEps.length === 0 && rawEps.length > 0) {
+                filteredEps = rawEps;
+            }
+
+            if (filteredEps.length === 0) {
+                epContainer.innerHTML = '<div class="status-msg">No episodes available.</div>';
+                return;
+            }
+
+            epContainer.innerHTML = filteredEps.map(item => {
+                const isSelected = selectedEp && selectedEp.msg_id === item.msg_id;
+                return `
+                    <button class="ep-btn ${isSelected ? 'active' : ''}" onclick='playEpisode(${JSON.stringify(item)})'>
+                        EP ${item.ep}
+                    </button>
+                `;
+            }).join('');
+
+            // Auto-play first episode if none selected
+            if (!selectedEp && filteredEps.length > 0) {
+                playEpisode(filteredEps[0]);
+            }
+        }
+
+        function playEpisode(epObject) {
+            selectedEp = epObject;
+
+            // Re-render episode grid to update active button class
+            const epButtons = document.querySelectorAll('.ep-btn');
+            epButtons.forEach(btn => {
+                if (btn.innerText.trim() === `EP ${epObject.ep}`) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Clean chat ID for URL format (@channel_name or -100xxx)
+            const cleanChat = epObject.chat_id.replace('@', '');
+            const streamUrl = `${BASE_URL}/stream/${cleanChat}/${epObject.msg_id}.mp4`;
+
+            // Update Player Title
+            const animeTitle = dbData[selectedAnimeKey]?.title || 'Anime';
+            document.getElementById('now-playing-title').innerText = `▶️ ${animeTitle} - S${selectedSeason} E${epObject.ep}`;
+
+            // Update Plyr Source dynamically
+            player.source = {
+                type: 'video',
+                title: `${animeTitle} S${selectedSeason} E${epObject.ep}`,
+                sources: [
+                    {
+                        src: streamUrl,
+                        type: 'video/mp4'
+                    }
+                ]
+            };
+
+            player.play();
+        }
     </script>
 </body>
 </html>
-

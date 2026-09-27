@@ -225,8 +225,8 @@
     <!-- Plyr JS -->
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
-        // API Base URL Detection (Automatically connects to same origin or backend)
-        const BASE_URL = window.location.origin.includes('http') ? window.location.origin : 'https://sevenanime-http-bot.onrender.com';
+        // Updated Backend Base URL
+        const BASE_URL = 'https://testing-bot1-sj7h.onrender.com';
 
         let player;
         let dbData = {};
@@ -236,7 +236,7 @@
         let selectedEp = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // Initialize Plyr
+            // Initialize Plyr Player
             player = new Plyr('#player', {
                 controls: [
                     'play-large', 'play', 'progress', 'current-time', 
@@ -246,10 +246,10 @@
                 speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
             });
 
-            // Fetch Database from main.py API
+            // Fetch Data from main.py API
             await loadDatabase();
 
-            // Set Audio Listener
+            // Audio Selection Listener
             document.querySelectorAll('.btn-audio').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     document.querySelectorAll('.btn-audio').forEach(b => b.classList.remove('active'));
@@ -259,7 +259,7 @@
                 });
             });
 
-            // Anime Dropdown Change Listener
+            // Anime Selector Change Listener
             document.getElementById('anime-selector').addEventListener('change', (e) => {
                 selectedAnimeKey = e.target.value;
                 selectedSeason = Object.keys(dbData[selectedAnimeKey]?.seasons || {})[0] || '1';
@@ -275,7 +275,7 @@
 
                 const animeKeys = Object.keys(dbData);
                 if (animeKeys.length === 0) {
-                    document.getElementById('season-container').innerHTML = '<div class="status-msg">No anime found in Telegram Database. Scan channel first!</div>';
+                    document.getElementById('season-container').innerHTML = '<div class="status-msg">No anime found in Database. Post/forward media in channel first!</div>';
                     return;
                 }
 
@@ -292,7 +292,7 @@
 
             } catch (err) {
                 console.error("API Fetch Error:", err);
-                document.getElementById('season-container').innerHTML = `<div class="status-msg" style="color: #f85149;">Failed to connect to backend main.py</div>`;
+                document.getElementById('season-container').innerHTML = `<div class="status-msg" style="color: #f85149;">Failed to connect to backend: ${BASE_URL}</div>`;
             }
         }
 
@@ -328,11 +328,11 @@
                 return;
             }
 
-            // Filter episodes by season and selected Audio/Dub Type
+            // Filter episodes by selected dub type
             let rawEps = anime.seasons[selectedSeason];
             let filteredEps = rawEps.filter(e => (e.type || 'official') === selectedDubType);
 
-            // Fallback if requested dub type has no episodes
+            // Fallback if selected dub type has no episodes
             if (filteredEps.length === 0 && rawEps.length > 0) {
                 filteredEps = rawEps;
             }
@@ -360,7 +360,7 @@
         function playEpisode(epObject) {
             selectedEp = epObject;
 
-            // Re-render episode grid to update active button class
+            // Highlight active episode button
             const epButtons = document.querySelectorAll('.ep-btn');
             epButtons.forEach(btn => {
                 if (btn.innerText.trim() === `EP ${epObject.ep}`) {
@@ -370,15 +370,15 @@
                 }
             });
 
-            // Clean chat ID for URL format (@channel_name or -100xxx)
+            // Stream URL generation
             const cleanChat = epObject.chat_id.replace('@', '');
             const streamUrl = `${BASE_URL}/stream/${cleanChat}/${epObject.msg_id}.mp4`;
 
-            // Update Player Title
+            // Update Header Title
             const animeTitle = dbData[selectedAnimeKey]?.title || 'Anime';
             document.getElementById('now-playing-title').innerText = `▶️ ${animeTitle} - S${selectedSeason} E${epObject.ep}`;
 
-            // Update Plyr Source dynamically
+            // Play video in Plyr
             player.source = {
                 type: 'video',
                 title: `${animeTitle} S${selectedSeason} E${epObject.ep}`,

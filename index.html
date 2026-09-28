@@ -518,12 +518,30 @@
 
     <!-- Main Anime Grid -->
     <main class="container">
-        <h2 class="section-title" id="sectionTitle"><i class="fa-solid fa-fire-flame-curated"></i> Trending This Week</h2>
+        <h2 class="section-title" id="sectionTitle"><i class="fa-solid fa-fire-flame-curved"></i> Trending This Week</h2>
 
         <div class="grid-container" id="animeGrid">
             
+            <!--
+              NAYA ANIME ADD KARNE KA TEMPLATE (copy-paste karke values badlo):
+              data-slug  = bot reply wala "Card Slug" (jaise solo_leveling) - ye Telegram ke anime se match hota hai
+              data-tags  = genres,   data-desc = videoplayer banner ki description
+              img src / card-title / rating-badge = videoplayer banner me apne aap use hote hain
+
+            <div class="anime-card" data-slug="anime_slug" data-tags="Action, Fantasy" data-desc="Short description..." onclick="openAnimePage(this)">
+                <div class="card-img-container">
+                    <img src="POSTER_URL" alt="Anime Name" loading="lazy">
+                    <span class="rating-badge"><i class="fa-solid fa-star"></i> 8.5</span>
+                </div>
+                <div class="card-info">
+                    <div class="card-title">Anime Name</div>
+                    <div class="card-tags">Action, Fantasy</div>
+                </div>
+            </div>
+            -->
+
             <!-- Solo Leveling Card -->
-            <div class="anime-card" data-tags="Action, Fantasy, Sci-Fi" onclick="openAnimePage('solo_leveling')">
+            <div class="anime-card" data-slug="solo_leveling" data-tags="Action, Fantasy, Sci-Fi" data-desc="Sung Jin-Woo continues his journey to become the strongest hunter in a world full of monsters and hidden secrets." onclick="openAnimePage(this)">
                 <div class="card-img-container">
                     <img src="https://lh3.googleusercontent.com/d/1DrYU7Rcf8h1JHkkakd6ks9MAiFYsnj4V" alt="Solo Leveling" loading="lazy">
                     <span class="rating-badge"><i class="fa-solid fa-star"></i> 9.4</span>
@@ -555,5 +573,13 @@
     <!-- External JavaScript Files -->
     <script src="script.js"></script>
     <script src="searchengine.js"></script>
+    <script>
+        // Card click / Watch Now -> videoplayer.html?anime=<slug>
+        function openAnimePage(target) {
+            const slug = typeof target === 'string' ? target : (target && target.dataset ? target.dataset.slug : '');
+            if (!slug) { console.warn('Card me data-slug missing hai'); return; }
+            window.location.href = 'videoplayer.html?anime=' + encodeURIComponent(slug);
+        }
+    </script>
 </body>
 </html>

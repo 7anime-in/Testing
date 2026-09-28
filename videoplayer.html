@@ -118,7 +118,7 @@
         <!-- Anime Details Banner -->
         <div class="bg-[#151522] border border-gray-800/80 rounded-2xl p-4 md:p-6 flex flex-col md:flex-row gap-6 items-start shadow-2xl relative overflow-hidden">
             <div class="w-full md:w-44 flex-shrink-0 aspect-[3/4] rounded-xl overflow-hidden border border-gray-700 shadow-xl relative mx-auto md:mx-0">
-                <img id="animePoster" src="https://lh3.googleusercontent.com/d/1hZPMLLUNMOVG8DmSd1eGd5Nmdgh6AUYZ" alt="Anime Poster" class="w-full h-full object-cover">
+                <img id="animePoster" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Anime Poster" class="w-full h-full object-cover">
             </div>
             
             <div class="flex-1 space-y-3 w-full">
@@ -133,8 +133,9 @@
                 <div class="flex flex-wrap items-center gap-2 text-xs">
                     <span class="bg-purple-600/20 text-purple-300 border border-purple-500/30 px-2.5 py-1 rounded-md font-semibold"><i class="fa-solid fa-microphone mr-1"></i> Hindi Dub</span>
                     <span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-md font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-star text-[10px]"></i> <span>9.4/10</span>
+                        <i class="fa-solid fa-star text-[10px]"></i> <span id="animeRating">--</span>
                     </span>
+                    <span id="animeTags" class="hidden bg-[#1a1a2b] text-gray-300 border border-gray-700 px-2.5 py-1 rounded-md font-medium"></span>
                     <span id="activeSeasonBadge" class="bg-[#1a1a2b] text-gray-300 border border-gray-700 px-2.5 py-1 rounded-md font-medium">Season 1</span>
                 </div>
 
@@ -246,9 +247,9 @@
 
     <script>
         // Auto Backend Detection Logic
-        const BACKEND_URL = (window.location.origin && !window.location.origin.includes("null") && !window.location.origin.includes("file://"))
-            ? window.location.origin
-            : "https://sevenanime-http-bot.onrender.com";
+        // Telegram engine (Render). Website kahin bhi host ho, API yahi se aayegi (CORS open hai).
+        const RENDER_URL = "https://sevenanime-http-bot.onrender.com";
+        const BACKEND_URL = window.location.hostname.endsWith("onrender.com") ? window.location.origin : RENDER_URL;
 
         const NOTIFICATION_EMAIL = "sumitguptagupta095@gmail.com";
 
@@ -276,12 +277,62 @@
             if (spinner) spinner.style.display = 'flex';
         }
 
-        function handleSearch(e) {
+        // ===== Anime info (poster, name, rating, tags, description) index.html ke cards se =====
+        let animeCatalog = [];
+
+        async function loadCatalog() {
+            if (animeCatalog.length) return animeCatalog;
+            try {
+                const res = await fetch('index.html', { cache: 'no-cache' });
+                const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+                animeCatalog = [...doc.querySelectorAll('.anime-card[data-slug]')].map(card => ({
+                    slug: card.dataset.slug,
+                    title: card.querySelector('.card-title')?.textContent.trim() || '',
+                    poster: card.querySelector('img')?.getAttribute('src') || '',
+                    rating: card.querySelector('.rating-badge')?.textContent.trim() || '',
+                    tags: card.dataset.tags || card.querySelector('.card-tags')?.textContent.trim() || '',
+                    desc: card.dataset.desc || ''
+                }));
+            } catch (e) {
+                console.warn('index.html se anime info load nahi hui:', e);
+            }
+            return animeCatalog;
+        }
+
+        const normKey = s => (s || '').toLowerCase().replace(/[\s-]+/g, '_');
+
+        function findAnimeMeta(key) {
+            const k = normKey(key);
+            return animeCatalog.find(a => normKey(a.slug) === k) || animeCatalog.find(a => normKey(a.title) === k) || null;
+        }
+
+        function applyMeta(meta) {
+            if (!meta) return;
+            if (meta.title) {
+                document.getElementById('animeTitleDisplay').innerText = meta.title;
+                document.getElementById('pageTitle').innerText = `${meta.title} - 7ANIME`;
+            }
+            if (meta.poster) {
+                const img = document.getElementById('animePoster');
+                img.src = meta.poster;
+                img.alt = meta.title || 'Anime Poster';
+            }
+            if (meta.rating) document.getElementById('animeRating').innerText = `${meta.rating}/10`;
+            if (meta.tags) {
+                const t = document.getElementById('animeTags');
+                t.innerText = meta.tags;
+                t.classList.remove('hidden');
+            }
+            if (meta.desc) document.getElementById('animeDescription').innerText = meta.desc;
+        }
+
+        async function handleSearch(e) {
             if (e.key === 'Enter') {
-                const query = e.target.value.trim().toLowerCase().replace(/\s+/g, '_');
-                if (query) {
-                    window.location.href = `?anime=${query}`;
-                }
+                const raw = e.target.value.trim().toLowerCase();
+                if (!raw) return;
+                await loadCatalog();
+                const hit = animeCatalog.find(a => a.title.toLowerCase().includes(raw));
+                window.location.href = `?anime=${encodeURIComponent(hit ? hit.slug : raw.replace(/\s+/g, '_'))}`;
             }
         }
 
@@ -301,6 +352,7 @@
 
             try {
                 showSpinner();
+                const metaPromise = loadCatalog().then(() => findAnimeMeta(animeSlug));
                 let response = await fetch(`${BACKEND_URL}/api/episodes/${animeSlug}`);
                 
                 if (response.ok) {
@@ -311,9 +363,11 @@
                     currentAnimeData = allData[animeSlug] || Object.values(allData)[0];
                 }
 
-                if (currentAnimeData && currentAnimeData.title) {
-                    document.getElementById('animeTitleDisplay').innerText = currentAnimeData.title;
-                    document.getElementById('pageTitle').innerText = `${currentAnimeData.title} - 7ANIME`;
+                const animeMeta = (await metaPromise) || findAnimeMeta(currentAnimeData?.title);
+                if (animeMeta) {
+                    applyMeta(animeMeta);
+                } else if (currentAnimeData && currentAnimeData.title) {
+                    applyMeta({ title: currentAnimeData.title });
                 }
 
                 renderSeasons();
